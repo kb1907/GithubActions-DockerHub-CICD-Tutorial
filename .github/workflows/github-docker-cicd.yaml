@@ -1,4 +1,9 @@
-name: Continuus Integration
+name: Github-Docker Hub MLOps pipeline - KB
+
+env:
+  DOCKER_USER: ${{secrets.DOCKER_USER}}
+  DOCKER_PASSWORD: ${{secrets.DOCKER_PASSWORD}}
+
 
 on:
   push:
@@ -11,28 +16,39 @@ on:
 
 jobs:
 
-  build:
+  ci_pipeline: 
+       runs-on: ubuntu-latest  
+       
+       steps:
+        - uses: actions/checkout@v1
+          with:
+            fetch-depth: 0
 
+        - name: Set up Python 3.9
+          uses: actions/setup-python@v1
+          with:
+            python-version: 3.9
 
-    runs-on: ubuntu-latest
+        - name: Install dependencies
+          run: |
+            python -m pip install --upgrade pip
+            if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
+        - name: Test
+          run: |
+            python -m pytest -vv test.py
 
-    steps:
-
-    - uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
-
-    - name: Set up Python 3.9
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.9
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-
-    - name: Test
-      run: |
-        python -m pytest -vv test.py
+  cd_pipeline:
+      runs-on: ubuntu-latest  
+      steps:
+      - uses: actions/checkout@v2 
+      - name: docker login
+        run: | # log into docker hub account
+          docker login -u $DOCKER_USER -p $DOCKER_PASSWORD  
+      - name: Get current date # get the date of the build
+        id: date
+        run: echo "::set-output name=date::$(date +'%Y-%m-%d--%M-%S')"
+      - name: Build the Docker image # push The image to the docker hub
+        run: docker build . --file Dockerfile --tag $DOCKER_USER/MLOps-Pipeline-Demo:${{ steps.date.outputs.date }}
+      - name: Docker Push
+        run: docker push $DOCKER_USER/catboost-model:${{ steps.date.outputs.date }}
