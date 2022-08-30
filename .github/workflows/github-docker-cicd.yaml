@@ -3,6 +3,7 @@ name: Github-Docker Hub MLOps pipeline - KB
 env:
   DOCKER_USER: ${{secrets.DOCKER_USER}}
   DOCKER_PASSWORD: ${{secrets.DOCKER_PASSWORD}}
+  REPO_NAME: ${{secrets.REPO_NAME}}
 
 
 on:
@@ -39,7 +40,8 @@ jobs:
             python -m pytest -vv test.py
 
   cd_pipeline:
-      runs-on: ubuntu-latest  
+      runs-on: ubuntu-latest 
+      needs: [ci_pipeline] 
       steps:
       - uses: actions/checkout@v2 
       - name: docker login
@@ -49,6 +51,6 @@ jobs:
         id: date
         run: echo "::set-output name=date::$(date +'%Y-%m-%d--%M-%S')"
       - name: Build the Docker image # push The image to the docker hub
-        run: docker build . --file Dockerfile --tag $DOCKER_USER/mlops-pipeline-demo:${{ steps.date.outputs.date }}
+        run: docker build . --file Dockerfile --tag $DOCKER_USER/$REPO_NAME:${{ steps.date.outputs.date }}
       - name: Docker Push
-        run: docker push $DOCKER_USER/mlops-pipeline-demo:${{ steps.date.outputs.date }}
+        run: docker push $DOCKER_USER/$REPO_NAME:${{ steps.date.outputs.date }}
