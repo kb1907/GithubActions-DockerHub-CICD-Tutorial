@@ -51,4 +51,4 @@ jobs:
       - name: Build the Docker image # push The image to the docker hub
         run: docker build . --file Dockerfile --tag $DOCKER_USER/mlops-pipeline-demo:${{ steps.date.outputs.date }}
       - name: Docker Push
-        run: docker push $DOCKER_USER/catboost-model:${{ steps.date.outputs.date }}
+        run: docker push $DOCKER_USER/mlops-pipeline-demo:${{ steps.date.outputs.date }}
